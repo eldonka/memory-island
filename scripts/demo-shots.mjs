@@ -63,9 +63,10 @@ try {
   let target = null; for (const p of plants) { if (/рожден|Birthday|друз/i.test((await p.getAttribute('aria-label')) || '')) target = p; }
   await (await (target || plants[0]).$('g > g > circle')).click({ force: true }); await page.waitForTimeout(1600);
   await shot('05-memory');
-  await page.click('button[aria-label="Фотографии"]'); await shot('05b-memory-photos', 800);
-  await page.click('button[aria-label="История"]'); await shot('06-memory-story', 800);
-  await page.click('button[aria-label="Музыка"]'); await shot('07-memory-music', 1200);
+  // cinema layout: photos centre, story left, music right; the old side panel opens from the Edit button
+  await shot('05b-memory-photos', 800);
+  await page.evaluate(() => { const el = document.querySelector('.cine-text-scroll'); if (el) el.scrollTop = 220; }); await shot('06-memory-story', 800);
+  await page.click('.topbar button:has-text("Изменить")'); await shot('07-memory-music', 1200);
   await page.click('text=Почему мой цветок такой?'); await shot('08-memory-why', 800);
   // 6. archive
   await page.goto(URL, { waitUntil: 'networkidle' }); await page.waitForTimeout(1000);
