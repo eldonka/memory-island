@@ -7,7 +7,7 @@ import { Plant } from '../plant/Plant';
 import { IcoPlus, IcoCalendar } from '../components/Icons';
 import { layoutGarden } from './gardenLayout';
 import { todayISO } from '../data/dates';
-import { monthStatus, creationWindow, isPlantableDate } from '../data/monthState';
+import { monthStatus, creationWindow, isPlantableDate, freeCreationDate } from '../data/monthState';
 
 export function Garden() {
   const { t, go, back, nav, profile, visiting, growingId, setGrowing, setToast } = useStore();
@@ -76,6 +76,8 @@ export function Garden() {
   const status = monthStatus(year, month, today);
   const window_ = creationWindow(year, month, today);
   const canPlant = !readOnly && !!window_;
+  // the date can be changed in the form itself; start from a day that is still empty
+  const startDate = window_ ? freeCreationDate(window_, list.map((m) => m.date)) : '';
 
   const create = (date: string) => { if (isPlantableDate(date, today)) go({ screen: 'create', newDate: date, editId: null }, 'zoom-in'); };
   const slotById = new Map(layout.slots.map((s) => [s.id, s]));
@@ -102,7 +104,7 @@ export function Garden() {
             ) : (
               <>
                 <h2>{t.gardenEmptyTitle}</h2>
-                {canPlant && <button className="btn btn-primary" onClick={() => create(window_!.defaultDate)}><IcoPlus /> {t.plantFirst}</button>}
+                {canPlant && <button className="btn btn-primary" onClick={() => create(startDate)}><IcoPlus /> {t.plantFirst}</button>}
               </>
             )}
           </div>
@@ -138,11 +140,9 @@ export function Garden() {
       </div>
       {canPlant && !growing && list.length > 0 && (
         <div className="garden-actions">
-          <label className="btn btn-primary" style={{ position: 'relative', overflow: 'hidden' }}>
+          <button type="button" className="btn btn-primary" onClick={() => create(startDate)}>
             <IcoCalendar /> {t.plantMemory}
-            <input type="date" min={window_!.min} max={window_!.max} defaultValue={window_!.defaultDate}
-              style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} onChange={(e) => e.target.value && create(e.target.value)} />
-          </label>
+          </button>
         </div>
       )}
       {!readOnly && status === 'future' && list.length > 0 && !growing && (

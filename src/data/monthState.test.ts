@@ -1,7 +1,7 @@
 // Regression tests for future-month navigation: a future month can be explored,
 // nothing can be planted there, and the suggested date never leaves the opened month.
 import { describe, it, expect } from 'vitest';
-import { monthStatus, creationWindow, isPlantableDate } from './monthState';
+import { monthStatus, creationWindow, isPlantableDate, freeCreationDate } from './monthState';
 import { daysInMonth } from './dates';
 
 const TODAY = '2026-11-21';
@@ -58,5 +58,23 @@ describe('isPlantableDate', () => {
     expect(isPlantableDate('1999-01-01', TODAY)).toBe(true);
     expect(isPlantableDate('2026-11-22', TODAY)).toBe(false);
     expect(isPlantableDate('2027-01-01', TODAY)).toBe(false);
+  });
+});
+
+describe('freeCreationDate', () => {
+  const win = (y: number, m: number) => creationWindow(y, m, TODAY)!;
+  it('starts from today when today is empty', () => {
+    expect(freeCreationDate(win(2026, 10), [])).toBe('2026-11-21');
+  });
+  it('skips days that already hold a memory', () => {
+    expect(freeCreationDate(win(2026, 10), ['2026-11-21'])).toBe('2026-11-20');
+    expect(freeCreationDate(win(2026, 10), ['2026-11-21', '2026-11-20'])).toBe('2026-11-19');
+  });
+  it('past month starts from its last day', () => {
+    expect(freeCreationDate(win(2026, 9), ['2026-10-31'])).toBe('2026-10-30');
+  });
+  it('falls back to the default when the month is full', () => {
+    const all = Array.from({ length: 21 }, (_, i) => `2026-11-${String(i + 1).padStart(2, '0')}`);
+    expect(freeCreationDate(win(2026, 10), all)).toBe('2026-11-21');
   });
 });

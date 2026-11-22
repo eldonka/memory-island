@@ -57,14 +57,18 @@ async function flow(label, viewport, mobile) {
     await shot('05-growing', 200);
     await page.waitForSelector('text=Воспоминание выросло', { timeout: 20000 });
     ok(`${label}: planted in October garden`, (await page.$$('.garden-plant .plant')).length === 1);
-    // 10-11 open flower + petals
+    // 10-11 open flower: photo in the centre, story on the left, music dock on the right, side panel closed
     await (await page.$('.garden-plant .plant g > g > circle')).click({ force: true }); await page.waitForTimeout(1500);   // click the bloom
-    await page.click('button[aria-label="Фотографии"]'); await page.waitForTimeout(600);
-    ok(`${label}: photo petal`, !!(await page.$('.photo-viewer img')));
-    await page.click('button[aria-label="История"]'); await page.waitForTimeout(600);
-    ok(`${label}: story petal`, (await page.textContent('.memory-story')).includes('Тихий вечер'));
-    await page.click('button[aria-label="Музыка"]'); await page.waitForTimeout(800);
-    ok(`${label}: music petal (embed or link)`, !!(await page.$('.music-embed iframe, a:has-text("Открыть в")')));
+    await page.waitForTimeout(800);
+    ok(`${label}: photo in the centre`, !!(await page.$('.cine-stage .photo-viewer img')));
+    ok(`${label}: blurred backdrop`, !!(await page.$('.cine-bg img.cine-bg-img')));
+    ok(`${label}: story on the left`, (await page.textContent('.memory-story')).includes('Тихий вечер'));
+    ok(`${label}: music player (embed, audio or link)`, !!(await page.$('.cine-dock .music-embed, .cine-dock audio, .cine-dock a:has-text("Открыть в")')));
+    ok(`${label}: side panel is closed by default`, !(await page.$('.memory-drawer')));
+    await page.click('.topbar button:has-text("Изменить")'); await page.waitForTimeout(500);
+    ok(`${label}: side panel opens from the Edit button`, !!(await page.$('.memory-drawer .memory-footer select')));
+    await page.keyboard.press('Escape'); await page.waitForTimeout(400);
+    ok(`${label}: Esc closes the side panel`, !(await page.$('.memory-drawer')));
     await shot('06-memory-music', 300);
     // 12-14 back, reload, persists
     await page.click('.topbar button.btn-ghost'); await page.waitForTimeout(1200);
@@ -115,6 +119,7 @@ async function flow(label, viewport, mobile) {
     await page.goto(URL, { waitUntil: 'networkidle' }); await page.waitForTimeout(900);
     await page.click('text=Архив'); await page.waitForTimeout(900);
     await page.click('.archive-item >> nth=0'); await page.waitForTimeout(1200);
+    await page.click('.topbar button:has-text("Изменить")'); await page.waitForTimeout(500);
     await page.selectOption('.memory-footer select', 'shared'); await page.waitForTimeout(500);
     await page.goto(URL, { waitUntil: 'networkidle' }); await page.waitForTimeout(900);
     await page.click('text=Планеты друзей'); await page.waitForTimeout(800);

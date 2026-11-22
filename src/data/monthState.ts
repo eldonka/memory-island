@@ -28,5 +28,21 @@ export function creationWindow(year: number, month: number, today: string = toda
   return { min, max: cappedMax, defaultDate: cappedMax };
 }
 
+/**
+ * The day a new memory should start on: the latest day of the window that has no
+ * memory yet (a day already taken would reopen the existing memory for editing).
+ * Falls back to the window's default when every day is taken.
+ */
+export function freeCreationDate(win: CreationWindow, taken: Iterable<string>): string {
+  const used = new Set(taken);
+  const [y, m, d] = win.defaultDate.split('-').map(Number);
+  const first = Number(win.min.slice(8, 10));
+  for (let day = d; day >= first; day--) {
+    const iso = `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    if (!used.has(iso)) return iso;
+  }
+  return win.defaultDate;
+}
+
 /** A calendar day can be planted when it is not in the future. */
 export const isPlantableDate = (iso: string, today: string = todayISO()) => iso <= today;
